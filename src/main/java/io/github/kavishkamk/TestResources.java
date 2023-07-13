@@ -1,35 +1,37 @@
 package io.github.kavishkamk;
 
+import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.map.IMap;
 import io.quarkus.logging.Log;
+import io.smallrye.mutiny.Uni;
 import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.Response;
 
-import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 @Path("/hello")
 public class TestResources {
 
-    private final HazelcastInstance hazelcastInstance;
-
-    public TestResources(HazelcastInstance hazelcastInstance) {
-        this.hazelcastInstance = hazelcastInstance;
-    }
-
     @POST
     @Path("/{username}")
     @Consumes("application/json")
-    public String hello(@PathParam("username") String username, Person person) {
+    public Uni<Person> hello(@PathParam("username") String username, Person person) throws ExecutionException, InterruptedException {
+        HazelcastInstance hazelcastInstance = Hazelcast.getHazelcastInstanceByName("abcd");
         Log.info("reserved: " + username + " , person: " + person);
-        try {
-            Map<String, Person> persons = hazelcastInstance.getMap("user-map1");
-            persons.put(username, person);
-        } catch (Exception e) {
-            Log.error("e:" + e.getMessage());
-            throw e;
-        }
 
+        IMap<String, Person> persons = hazelcastInstance.getMap("user-map1");
+        return persons.putAsync(username, person).thenApply(x -> Uni.createFrom().item(x)).toCompletableFuture().get();
 
+    }
 
-        return "Hello from RESTEasy Reactive";
+    @GET
+    public Uni<Response> get() throws ExecutionException, InterruptedException {
+        HazelcastInstance hazelcastInstance = Hazelcast.getHazelcastInstanceByName("abcd");
+
+        IMap<String, Person> map = hazelcastInstance.getMap("user-map1");
+
+        return map.getAsync("madhu").thenApply(person -> Uni.createFrom().item(Response.ok(person).build())).toCompletableFuture().get();
+
     }
 }
