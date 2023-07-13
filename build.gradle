@@ -10,7 +10,7 @@ repositories {
 
 dependencies {
     implementation enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}")
-    implementation 'com.hazelcast:quarkus-hazelcast-client:4.0.0'
+    implementation 'com.hazelcast:hazelcast:5.3.1'
     implementation 'io.quarkus:quarkus-arc'
     implementation 'io.quarkus:quarkus-resteasy-reactive'
     implementation 'io.quarkus:quarkus-resteasy-reactive-jackson'
